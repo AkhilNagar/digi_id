@@ -60,15 +60,30 @@ def connect_event():
   db=conn[ch]
 
 def view_event():
-  #to store list of collections of db
-  #collections=db.list_collection_names()
-  print("Event Details")
-  #To iterate through documents
-  for doc in db.details.find():
-    print("Event Name", doc["name"])
-    print("Capacity", doc["capacity"])
-  #To find count of documents.  option 2--->  .count_documents({})
-  print("Number of Registered Users ", db.users.count_documents({}))
+    #to store list of collections of db
+    #collections=db.list_collection_names()
+    ch=input("Enter event name to connect to ")
+    print("Event Details")
+    #To iterate through documents
+    obj=db.details.find_one({},{"name":1,"capacity":1})
+    print("Event Name", obj["name"])
+    print("Capacity", obj["capacity"])
+    #To find count of documents.  option 2--->  .count_documents({})
+    count= db.users.count_documents({})
+    print("Number of Registered Users ", count)
+    if int(obj["capacity"]) < count:
+        #run api
+        paging=config('paging')
+        url=f"{paging}{ch}"
+        print(url)
+        data=list(db.users.find({},{"_id":0}))
+        headers={"Content-type":"application/json"}
+        import requests
+        response=requests.post(url,json=data,headers=headers)
+        if response.status_code!=200:
+            print(response.status_code)
+        else:
+            print("Created")
 
 def view_registrations():
   for doc in db.users.find():
@@ -79,7 +94,7 @@ def add_registrations():
     #Convert csv file to pandas df
     import pandas as pd
     import io
-    df = pd.read_csv("mockdata.csv")
+    df = pd.read_csv("mock.csv")
     
 
     #Add users from dataset to users collection
@@ -112,7 +127,7 @@ def add_event():
       "name":name,
       "date": date,
       "time":time,
-      "capacity":cap
+      "capacity":int(cap)
   }
   collection.insert_one(event_doc)
 
