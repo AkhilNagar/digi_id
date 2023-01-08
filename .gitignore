@@ -3,3 +3,4 @@ base/
 test1.py
 test2.py
 .env
+mock.csv

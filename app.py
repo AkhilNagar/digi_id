@@ -31,15 +31,17 @@ def paging(eventname):
     if(request.method=="POST"):
         print("POSTYY")
         user=request.json
-        print ("USER",type(user))
+        #print ("USER")
         for obj in user:
             phone=obj["phone"]
-            # print(phone)
+            #print(phone)
             # print(type(phone))
-            result=collection.find_one({"phone_number":phone},{"_id":0, "encodings":1})
-            # print(result)
+            #CHANGE PHONE TYPE ONCE CHANGED IN USERDATA OF HOST
+            result=collection.find_one({"phone_number":str(phone)},{"_id":0, "encodings":1})
+            #print("RESULT",result)
             if result != None:
                 coll.insert_one(result)
+                print("value inserted ",result)
         return eventname
         #Look for each element in host collection
         #Create new collection for event in host-->refs of 
