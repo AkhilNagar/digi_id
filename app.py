@@ -1,12 +1,13 @@
-from crypt import methods
 from flask import Flask,request,jsonify
 from decouple import config
 import pymongo
 import json
 import certifi
-#import uuid
 import os
-
+import face_recognition
+import cv2
+import numpy as np
+import io
 
 
 app = Flask(__name__)
@@ -14,8 +15,8 @@ app = Flask(__name__)
 
 @app.route('/', methods=["POST","GET"])
 def index():
-    text={"title":"WELCOME"}
-    return jsonify(text)
+    text="Welcome"
+    return text
 
 @app.route('/page/<string:eventname>', methods=['GET','POST'])
 def paging(eventname):
@@ -37,7 +38,7 @@ def paging(eventname):
             #print(phone)
             # print(type(phone))
             #CHANGE PHONE TYPE ONCE CHANGED IN USERDATA OF HOST
-            result=collection.find_one({"phone_number":str(phone)},{"_id":0, "encodings":1})
+            result=collection.find_one({"phone_number":phone},{"_id":0, "encoding":1})
             #print("RESULT",result)
             if result != None:
                 coll.insert_one(result)
@@ -45,29 +46,35 @@ def paging(eventname):
         return eventname
         #Look for each element in host collection
         #Create new collection for event in host-->refs of 
-
-@app.route('/verify/<string:eventname>',methods=['POST'])
-def verify(eventname):
+#<string:eventname>
+#eventname
+@app.route('/verify',methods=['POST'])
+def verify():
+    
+    eventname="event1"
     username = config('DB_USERNAME')
     password = config('DB_PASSWORD')
     client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
-    t_encoding=request.json
+    frame=request.data
+    image = cv2.imdecode(np.frombuffer(frame, dtype=np.uint8), cv2.IMREAD_COLOR)
+    faceEncoding=face_recognition.face_encodings(image)[0]
+    #print(faceEncoding)
+    
     db=client[eventname]
     collection=db[eventname]
-    encs=collection.find({},{"encodings":1})
+    encs=collection.find({},{"encoding":1})
+    print("encs",encs)
+    enc=[faceEncoding]
     for obj in encs:
-        f_encoding=obj["encodings"]
-        
-        print(f_encoding)
-        #Compare face encodings
-        #if true return true else false
+        enc.append(obj['encoding'])
+    result = face_recognition.compare_faces(enc, faceEncoding)
+    print(result)
     
-    return "True"
-
+    return "true"
 
 
 if __name__=="__main__":
-    app.run(debug=True)
+    app.run(debug=True,port=8000)
 
 '''
 route 1

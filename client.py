@@ -1,135 +1,71 @@
-#DRIVER CODE
-import pymongo
-global db
-global conn
-global username
-global password
+from time import time
+from flask import Flask, render_template, Response
+import cv2
+import numpy as np
+import requests
 from decouple import config
-import certifi
 
-def driver():
-    global username
-    global password
-    username=config("DB_USERNAME")
-    password=config("DB_PASSWORD")
-    flag=True
-    print("\n Perform step 1 then step 2 first before proceeding")
-    print("1) Connect to client number")
-    print("2) Connect to an event inside the client")
-    print("3) View event details and number of users for the event")
-    print("4) Add registrations for event")
-    print("5) View registrations for event")
-    print("6) Add event")
-    print("7) Blank")
-    print("\n")
+app=Flask(__name__)
 
-    while(flag):
-        ch=int(input("Enter a choice "))
-        if ch==1:
-            connect()
-        elif ch==2:
-            connect_event()
-        elif ch==3:
-            view_event()
-        elif ch==4:
-            add_registrations()
-        elif ch==5:
-            view_registrations()
-        elif ch==6:
-            add_event()
-        else:
-            flag=False
+#Video capture object
+vid = cv2.VideoCapture(0)
+face_cascade = cv2.CascadeClassifier()
+face_cascade.load(cv2.samples.findFile("haarcascade_frontalface_default.xml"))
+flag = True
+api_url=config("verify")
+
+def face_extractor(img):
+    # Function detects faces and returns the cropped face
+    # If no face detected, it returns the input image
+   
+    frame_gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    frame_gray = cv2.equalizeHist(frame_gray)
+    faces = face_cascade.detectMultiScale(frame_gray, 1.3, 5)
+   
+    if faces == ():
+        return None
+   
+    # Crop all faces found
+    for (x,y,w,h) in faces:
+        x=x-10
+        y=y-10
+        cropped_face = img[y:y+h+50, x:x+w+50]
+
+    return cropped_face
 
 
+def gen_frames(): 
+    apif = 0  
+    while True:
+        ret, frame = vid.read()
 
+        if face_extractor(frame) is not None:
 
-def connect():
-  global conn
-  ch=int(input("Enter client number "))
-  if ch==1:
-    conn = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@client.du8czbz.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
-    #db=client.client
-  elif ch==2:
-    conn = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@client.nraxkyn.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
-    #db=client.client
-  print("Connection Successful \n")
-
-def connect_event():
-  global db
-  ch=input("Enter event name to connect to ")
-  db=conn[ch]
-
-def view_event():
-    #to store list of collections of db
-    #collections=db.list_collection_names()
-    ch=input("Enter event name to connect to ")
-    print("Event Details")
-    #To iterate through documents
-    obj=db.details.find_one({},{"name":1,"capacity":1})
-    print("Event Name", obj["name"])
-    print("Capacity", obj["capacity"])
-    #To find count of documents.  option 2--->  .count_documents({})
-    count= db.users.count_documents({})
-    print("Number of Registered Users ", count)
-    if int(obj["capacity"]) < count:
-        #run api
-        paging=config('paging')
-        url=f"{paging}{ch}"
-        print(url)
-        data=list(db.users.find({},{"_id":0}))
-        headers={"Content-type":"application/json"}
-        import requests
-        response=requests.post(url,json=data,headers=headers)
-        if response.status_code!=200:
-            print(response.status_code)
-        else:
-            print("Created")
-
-def view_registrations():
-  for doc in db.users.find():
-    print(doc["f_name"])
-
-def add_registrations():
-
-    #Convert csv file to pandas df
-    import pandas as pd
-    import io
-    df = pd.read_csv("mock.csv")
+            # face = cv2.resize(cropped_face, (400,400))
+            if apif==0:
+                apif=1
+                face = cv2.resize(face_extractor(frame), (400,400))
+                frameBytes = cv2.imencode('.jpg', face)[1]
+                url = api_url
+                headers = {"Content-type":"text/plain"}
+                response = requests.post(url, headers = headers, data = frameBytes.tobytes())
+                print(response.content)
+    
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame1 = buffer.tobytes()
+        yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame1 + b'\r\n')
+        
     
 
-    #Add users from dataset to users collection
-    import random
-    i=int(input("Enter number of registrations to be added"))
-    for j in range(0,i):
-      n=random.randint(0,len(df))
-      f_name=df.loc[n,'first_name']
-      l_name=df.loc[n,'last_name']
-      digi_id= random.choice([True, False])
-      phone=int(df.loc[n,'phone_number'])
+@app.route('/')
+def index():
+    # return render_template('index.html')
+    return "Welcome!"
 
-      person_document={
-          "f_name":f_name,
-          "l_name":l_name,
-          "digi_id":digi_id,
-          "phone":phone
-      }
-      db["users"].insert_one(person_document)
-    print("Added Successfully")
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-def add_event():
-  name=input("Enter name of event ")
-  date=input("Enter date of event ")
-  time=input("Enter time of event in military code ")
-  cap=input("Enter capacity of event ")
-  db=conn[name]
-  collection=db["details"]
-  event_doc={
-      "name":name,
-      "date": date,
-      "time":time,
-      "capacity":int(cap)
-  }
-  collection.insert_one(event_doc)
-
-
-driver()
+if __name__=='__main__':
+    app.run()
