@@ -2,6 +2,7 @@
 import pymongo
 global db
 global conn
+global ev
 global username
 global password
 from decouple import config
@@ -21,6 +22,7 @@ def driver():
     print("5) View registrations for event")
     print("6) Add event")
     print("7) Start Event entries")
+    print("8) Page Event")
     print("\n")
 
     while(flag):
@@ -37,8 +39,10 @@ def driver():
             view_registrations()
         elif ch==6:
             add_event()
-        elif ch==6:
+        elif ch==7:
             start_event()
+        elif ch==8:
+            page_event()
         
         else:
             flag=False
@@ -59,35 +63,23 @@ def connect():
 
 def connect_event():
   global db
-  ch=input("Enter event name to connect to ")
-  db=conn[ch]
+  global ev
+  ev=input("Enter event name to connect to ")
+  db=conn[ev]
 
 def view_event():
     #to store list of collections of db
     #collections=db.list_collection_names()
-    ch=input("Enter event name to connect to ")
+    # ch=input("Enter event name to connect to ")
     print("Event Details")
     #To iterate through documents
     obj=db.details.find_one({},{"name":1,"capacity":1})
     print("Event Name", obj["name"])
     print("Capacity", obj["capacity"])
     #To find count of documents.  option 2--->  .count_documents({})
-    # count= db.users.count_documents({})
-    count =200
-    print("Number of Registered Users ", count)
-    if obj["capacity"] < count:
-        #run api
-        paging=config('paging')
-        url=f"{paging}{ch}"
-        print(url)
-        data=list(db.users.find({},{"_id":0}))
-        headers={"Content-type":"application/json"}
-        import requests
-        response=requests.post(url,json=data,headers=headers)
-        if response.status_code!=200:
-            print(response.status_code)
-        else:
-            print("Created")
+    count= db.users.count_documents({})
+    print("Count",count)
+    
 
 def view_registrations():
   for doc in db.users.find():
@@ -98,14 +90,16 @@ def add_registrations():
     #Convert csv file to pandas df
     import pandas as pd
     import io
-    df = pd.read_csv("mock.csv")
+    df = pd.read_csv("mockdata.csv")
     
 
     #Add users from dataset to users collection
     import random
     i=int(input("Enter number of registrations to be added"))
+    n=0
     for j in range(0,i):
-      n=random.randint(0,len(df))
+        # use the below to randomise the users being added
+        #n=random.randint(0,len(df))
       f_name=df.loc[n,'first_name']
       l_name=df.loc[n,'last_name']
       digi_id= random.choice([True, False])
@@ -118,6 +112,7 @@ def add_registrations():
           "phone":phone
       }
       db["users"].insert_one(person_document)
+      n+=1
     print("Added Successfully")
 
 def add_event():
@@ -135,5 +130,17 @@ def add_event():
   }
   collection.insert_one(event_doc)
 
+def page_event():
+    paging=config('paging')
+    url=f"{paging}{ev}"
+    print(url)
+    data=list(db.users.find({},{"_id":0}))
+    headers={"Content-type":"application/json"}
+    import requests
+    response=requests.post(url,json=data,headers=headers)
+    if response.status_code!=200:
+        print(response.status_code)
+    else:
+        print("Created")
 
 driver()

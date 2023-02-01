@@ -1,9 +1,10 @@
 base/
-.DS_Store
 test1.py
 test2.py
 .env
-mock.csv
+mockdata.csv
 img.jpg
 me.jpg
 img2.jpg
+haarcascade_frontalface_default.xml
+
