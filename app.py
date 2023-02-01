@@ -35,23 +35,15 @@ def paging(eventname):
         #print ("USER")
         for obj in user:
             phone=obj["phone"]
-            #print(phone)
-            # print(type(phone))
-            #CHANGE PHONE TYPE ONCE CHANGED IN USERDATA OF HOST
             result=collection.find_one({"phone_number":phone},{"_id":0, "encoding":1})
-            #print("RESULT",result)
             if result != None:
                 coll.insert_one(result)
                 print("value inserted ",result)
         return eventname
-        #Look for each element in host collection
-        #Create new collection for event in host-->refs of 
-#<string:eventname>
-#eventname
-@app.route('/verify',methods=['POST'])
-def verify():
+        
+@app.route('/verify/<string:eventname>',methods=['POST'])
+def verify(eventname):
     
-    eventname="event1"
     username = config('DB_USERNAME')
     password = config('DB_PASSWORD')
     client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
@@ -64,14 +56,15 @@ def verify():
     collection=db[eventname]
     encs=collection.find({},{"encoding":1})
     print("encs",encs)
-    enc=[faceEncoding]
+    enc=[]
     for obj in encs:
         enc.append(obj['encoding'])
     result = face_recognition.compare_faces(enc, faceEncoding)
     print(result)
-    
-    return "true"
-
+    for i in result:
+        if i == True:
+            return "true"
+    return "false"
 
 if __name__=="__main__":
     app.run(debug=True,port=8000)
