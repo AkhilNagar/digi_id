@@ -10,3 +10,4 @@ python-decouple==3.6
 Werkzeug==2.2.2
 cmake
 dlib
+face-recognition
