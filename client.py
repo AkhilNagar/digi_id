@@ -1,6 +1,7 @@
 from time import time
 from flask import Flask, render_template, Response, request
 import cv2
+from decouple import config
 # import face_recognition
 import numpy as np
 import requests
@@ -81,14 +82,17 @@ def gen_frames():
                 apif=1
                 face = cv2.resize(face_extractor(frame), (400,400))
                 frameBytes = cv2.imencode('.jpg', face)[1]
-                url = "http://127.0.0.1:8000/verify"
+                api_url=config("verify")
+                url=api_url+"/Pathaan"
+                # url = "http://127.0.0.1:8000/verify/Pathaan"
                 headers = {"Content-type":"text/plain"}
                 response = requests.post(url, headers = headers, data = frameBytes.tobytes())
                 print(response.content)
     
         ret, buffer = cv2.imencode('.jpg', frame)
         frame1 = buffer.tobytes()
-        yield (b'--frame\r\n'
+        if apif==1:
+            yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame1 + b'\r\n')
 
 @app.route('/')
@@ -98,6 +102,7 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
+    # return render_template('temp.html')
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/requests', methods=['POST', 'GET'])

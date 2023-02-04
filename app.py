@@ -38,7 +38,7 @@ def paging(eventname):
             result=collection.find_one({"phone_number":phone},{"_id":0, "encoding":1})
             if result != None:
                 coll.insert_one(result)
-                print("value inserted ")
+                print("value inserted ",result)
         return eventname
         
 @app.route('/verify/<string:eventname>',methods=['POST'])
@@ -67,7 +67,7 @@ def verify(eventname):
     return "false"
 
 if __name__=="__main__":
-    app.run(host='0.0.0.0',port=3000)
+    app.run(debug=True,port=8000)
 
 '''
 route 1

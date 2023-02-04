@@ -5,14 +5,10 @@
                 <div class="col-lg-8  offset-lg-2">
         
                     
-                    <h2 class="mt-5">CAMERA APP by Hemanth Nag</h2>
+                    <h2 class="mt-5">DIGI ID</h2>
                     <form method="post" action="{{ url_for('tasks') }}">
                     <input type="submit" value="Stop/Start" name="stop" />
                     <input type="submit" value="Verify" name="click"/>
-                    <!-- <input type="submit" value="Grey" name="grey" />
-                    <input type="submit" value="Negative" name="neg" />
-                    <input type="submit" value="Face Only" name="face" />
-                    <input type="submit" value="Start/Stop Recording" name="rec" /> --> -->
                     </form>
                     <img src="{{ url_for('video_feed') }}" height="80%">
                     <h3 style="font-family:courier;">Instructions:</h3>
