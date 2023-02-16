@@ -8,14 +8,14 @@ import face_recognition
 import cv2
 import numpy as np
 import io
-
+import socket
 
 app = Flask(__name__)
 
 
 @app.route('/', methods=["POST","GET"])
 def index():
-    text="Welcome"
+    text=f"Welcome to container no.: {socket.gethostname()}"
     return text
 
 @app.route('/page/<string:eventname>', methods=['GET','POST'])
