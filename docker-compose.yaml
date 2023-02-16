@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  flask:
+    build: ./api
+    #container_name: f_test
+    restart: always
+    volumes:
+      - ./api:/app
+    env_file:
+      - ./api/.env
+    ports:
+      - "8000:8000"
