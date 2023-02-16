@@ -9,15 +9,23 @@ import cv2
 import numpy as np
 import io
 import socket
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0572da7 (Added nginx)
 
 app = Flask(__name__)
 
 
 @app.route('/', methods=["POST","GET"])
 def index():
+<<<<<<< HEAD
     # text="Welcome"
     return f"Welcome Container ID: {socket.gethostname()}"
+=======
+    text=f"Welcome to container no.: {socket.gethostname()}"
+    return text
+>>>>>>> 0572da7 (Added nginx)
 
 @app.route('/page/<string:eventname>', methods=['GET','POST'])
 def paging(eventname):
