@@ -1,11 +1,9 @@
-base/
-test1.py
-test2.py
-.env
-mockdata.csv
-img.jpg
-me.jpg
-img2.jpg
-haarcascade_frontalface_default.xml
-fdb/
+api/.env
+client/.env
+client/mockdata.csv
+client/img.jpg
+cient/me.jpg
+client/img2.jpg
+client/haarcascade_frontalface_default.xml
+client/fdb/
 
