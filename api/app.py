@@ -10,9 +10,12 @@ import numpy as np
 import io
 import socket
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> 0572da7 (Added nginx)
+=======
+>>>>>>> ed1d8e557601e64e8dedf2d81e391f01b9513350
 
 app = Flask(__name__)
 
@@ -20,9 +23,12 @@ app = Flask(__name__)
 @app.route('/', methods=["POST","GET"])
 def index():
 <<<<<<< HEAD
+<<<<<<< HEAD
     # text="Welcome"
     return f"Welcome Container ID: {socket.gethostname()}"
 =======
+=======
+>>>>>>> ed1d8e557601e64e8dedf2d81e391f01b9513350
     text=f"Welcome to container no.: {socket.gethostname()}"
     return text
 >>>>>>> 0572da7 (Added nginx)
