@@ -8,6 +8,7 @@ import face_recognition
 import cv2
 import numpy as np
 import io
+import socket
 
 
 app = Flask(__name__)
@@ -15,8 +16,8 @@ app = Flask(__name__)
 
 @app.route('/', methods=["POST","GET"])
 def index():
-    text="Welcome"
-    return text
+    # text="Welcome"
+    return f"Welcome Container ID: {socket.gethostname()}"
 
 @app.route('/page/<string:eventname>', methods=['GET','POST'])
 def paging(eventname):
@@ -67,7 +68,7 @@ def verify(eventname):
     return "false"
 
 if __name__=="__main__":
-    app.run(host='0.0.0.0',port=8000)
+    app.run()
 
 '''
 route 1
