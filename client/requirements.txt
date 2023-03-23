@@ -11,3 +11,4 @@ Werkzeug==2.2.2
 cmake
 dlib
 face-recognition
+redis

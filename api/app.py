@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 import io
 import socket
+import redis
 
 app = Flask(__name__)
 
@@ -93,11 +94,13 @@ class mongo():
         mongo.mongoconn()    
         db=client[eventname]
         collection=db[eventname]
-        data=collection.find({},{"phone_no":1,"encoding":1})
-        if data.count()==0:
-            paging(eventname)
-            data=collection.find({},{"phone_no":1,"encoding":1})
-        
+        data=collection.find({},{"_id":0,"phone_number":1,"encoding":1})
+        # count=collection.find({},{"phone_no":1,"encoding":1}).count()
+        # if count==0:
+        #     paging(eventname)
+        #     data=collection.find({},{"phone_no":1,"encoding":1})
+        # else:
+        #     data=collection.find({},{"phone_no":1,"encoding":1})
         return data
 
 
@@ -124,8 +127,11 @@ class redi():
         cached_enc=[]
         user_id=r.smembers(eventname)
         for i in user_id:
-            cached_enc.append(r.lrange(i,0,-1))
-
+            arr=r.lrange(i,0,-1)
+            arr=np.array(arr)
+            arr=arr.astype('float64')
+            cached_enc.append(arr)
+        
         '''
         for i in client[eventname]:
             enc=r.get(client.eventname[i])
@@ -134,16 +140,21 @@ class redi():
                 return True
         return False
         '''
+        print("Cache Hit")
         return cached_enc
     def cache_miss(eventname):
         data=mongo.get_data(eventname)
         enc=[]
         for obj in data:
-            phone=obj['phone_no']
+            #print(obj)
+            phone=obj['phone_number']
             encoding=obj['encoding']
-            r.lpush(phone, *enc) #pushes every element of the 'encoding' array into a list with key 'phone'
+            if r.exists(phone) == False:
+                print("Entered :(")
+                r.rpush(phone, *encoding) #pushes every element of the 'encoding' array into a list with key 'phone'
             r.sadd(eventname,phone)
             enc.append(encoding)
+        print("Cache Miss")
         return enc
         
 
