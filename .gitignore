@@ -9,8 +9,8 @@ client/haarcascade_frontalface_default.xml
 client/fdb/
 fdb2/
 fdb/
-
-
+base/
+.DS_Store
 
 
 

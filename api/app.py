@@ -35,7 +35,7 @@ def paging(eventname):
         #print ("USER")
         for obj in user:
             phone=obj["phone"]
-            result=collection.find_one({"phone_number":phone},{"_id":0, "encoding":1})
+            result=collection.find_one({"phone_number":phone},{"_id":0, "phone_number":1, "encoding":1})
             if result != None:
                 coll.insert_one(result)
                 print("value inserted ",result)
@@ -44,42 +44,113 @@ def paging(eventname):
 @app.route('/verify/<string:eventname>',methods=['POST'])
 def verify(eventname):
     
-    username = config('DB_USERNAME')
-    password = config('DB_PASSWORD')
-    client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
+    # Make connection
+    #encs is an array of objects of encodings for the particular event
+    redi.redis_conn()
+    
+    
     frame=request.data
     image = cv2.imdecode(np.frombuffer(frame, dtype=np.uint8), cv2.IMREAD_COLOR)
     faceEncoding=face_recognition.face_encodings(image)[0]
-    #print(faceEncoding)
     
-    db=client[eventname]
-    collection=db[eventname]
-    encs=collection.find({},{"encoding":1})
-    print("encs",encs)
-    enc=[]
-    for obj in encs:
-        enc.append(obj['encoding'])
-    result = face_recognition.compare_faces(enc, faceEncoding)
-    print(result)
-    for i in result:
-        if i == True:
-            return "true"
-    return "false"
+    
+    if r.exists(eventname):
+        enc=redi.cache_hit(eventname)
+        result = face_recognition.compare_faces(enc, faceEncoding)
+        print(result)
+        for i in result:
+            if i == True:
+                return "true"
+        return "false"
+        
+    else:
+        enc=redi.cache_miss(eventname)
+        result = face_recognition.compare_faces(enc, faceEncoding)
+        print(result)
+        for i in result:
+            if i == True:
+                return "true"
+        return "false"
+    
+    
+    # print("encs",encs)
+    # enc=[]
+    # for obj in encs:
+    #     enc.append(obj['encoding'])
+    #     
+
+
+    
+class mongo():
+
+    def mongoconn():
+        global client
+        username = config('DB_USERNAME')
+        password = config('DB_PASSWORD')
+        client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
+        
+    def get_data(eventname):
+        mongo.mongoconn()    
+        db=client[eventname]
+        collection=db[eventname]
+        data=collection.find({},{"phone_no":1,"encoding":1})
+        if data.count()==0:
+            paging(eventname)
+            data=collection.find({},{"phone_no":1,"encoding":1})
+        
+        return data
+
+
+
+class redi():
+    '''
+    Structure of hashset: 
+        client1{
+                event1:['k1','k2','k3']
+                event2:['k4','k5','k6']
+                event3:['k7','k8','k9']
+            }
+    Structure of redis list:
+        k1=[1,2,3]
+    '''
+        
+    def redis_conn():
+        global redis
+        global r
+        pool = redis.ConnectionPool(host='localhost', port=6379, db=0, decode_responses=True)
+        r = redis.Redis(connection_pool=pool)
+        return 0
+    def cache_hit(eventname):
+        cached_enc=[]
+        user_id=r.smembers(eventname)
+        for i in user_id:
+            cached_enc.append(r.lrange(i,0,-1))
+
+        '''
+        for i in client[eventname]:
+            enc=r.get(client.eventname[i])
+            flag=enc.compare_faces([enc],faceEncoding)
+            if flag[0]==True:
+                return True
+        return False
+        '''
+        return cached_enc
+    def cache_miss(eventname):
+        data=mongo.get_data(eventname)
+        enc=[]
+        for obj in data:
+            phone=obj['phone_no']
+            encoding=obj['encoding']
+            r.lpush(phone, *enc) #pushes every element of the 'encoding' array into a list with key 'phone'
+            r.sadd(eventname,phone)
+            enc.append(encoding)
+        return enc
+        
+
+
+
+
 
 if __name__=="__main__":
     app.run()
 
-'''
-route 1
-client calls post request on api and passes json list of all users in the body
-host receives list of all users for that event
-performs query operations on the mongo db
-a new temporary table is created with only registered users at host site
-'''
-
-'''
-route 2
-client calls api for a person
-quick checking from table generated
-returns true or false
-'''
