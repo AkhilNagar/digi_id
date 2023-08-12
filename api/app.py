@@ -9,12 +9,15 @@ import cv2
 import numpy as np
 import io
 import socket
-
+import random
 app = Flask(__name__)
 
 
 @app.route('/', methods=["POST","GET"])
 def index():
+    if random.random() < 0.5:  # 50% chance of failure (for testing purposes)
+        # Simulate a failure by returning a 500 status code
+        return "Internal Server Error", 500
     text=f"Welcome to container no.: {socket.gethostname()}"
     return text
 
