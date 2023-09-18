@@ -1,4 +1,5 @@
-from flask import Flask,request,jsonify
+from flask import Flask,request,jsonify,redirect,url_for,flash
+import bcrypt
 from decouple import config
 import pymongo
 import json
@@ -11,6 +12,63 @@ import io
 import socket
 import random
 app = Flask(__name__)
+
+global conn
+global db
+global ev
+
+def connect_to_mongodb():
+    global conn
+    global db
+    global username
+    global password
+    # username = config('DB_USERNAME')
+    # password = config('DB_PASSWORD')
+    conn = pymongo.MongoClient(f"mongodb+srv://kaushik:kaushiksdb@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
+    db = conn.users
+
+connect_to_mongodb()
+
+@app.route('/register', methods=['POST'])
+def register():
+    data=request.json
+    username=data["username"]
+    password=data["password"]
+
+    if db.users.find_one({"username":username}):
+        return jsonify({"message":"Username already exists"}),400
+    
+    hashed=bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt())
+
+    user_object={
+        "username":username,
+        "password":hashed
+    }
+    db.users.insert_one(user_object)
+    return jsonify({"message":"User created successfully"}),201
+
+@app.route('/collections', methods=['GET'])
+def list_collections():
+    # List all collections in the current database
+    collection_names = db.list_collection_names()
+
+    if collection_names:
+        return jsonify({"collections": collection_names}), 200
+    else:
+        return jsonify({"message": "No collections found in the database"}), 404
+
+@app.route('/login', methods=['POST'])
+def login():
+    data=request.json
+    username=data["username"]
+    password=data["password"]
+    user=db.users.find_one({"username":username})
+    if user and bcrypt.checkpw(password.encode('utf-8'),user["password"]):
+        return jsonify({"message":"Login successful"}),200
+    else:
+        return jsonify({"message":"Invalid credentials"}),400
+    
+
 
 
 @app.route('/', methods=["POST","GET"])
