@@ -2,16 +2,16 @@ from flask import Flask,request,jsonify,redirect,url_for,flash
 import bcrypt
 from decouple import config
 import pymongo
-import json
 import certifi
-import os
 import face_recognition
 import cv2
 import numpy as np
-import io
 import socket
 import random
+import jwt
+from datetime import datetime, timedelta
 app = Flask(__name__)
+app.config['SECRET_KEY'] = "testing"
 
 global conn
 global db
@@ -64,7 +64,10 @@ def login():
     password=data["password"]
     user=db.users.find_one({"username":username})
     if user and bcrypt.checkpw(password.encode('utf-8'),user["password"]):
-        return jsonify({"message":"Login successful"}),200
+        expiry_time=datetime.utcnow()+timedelta(hours=24)
+        payload={"username":username,"exp":expiry_time}
+        token=jwt.encode(payload,config('SECRET_KEY'),algorithm="HS256")
+        return jsonify({"message":"Login successful","token":token}),200
     else:
         return jsonify({"message":"Invalid credentials"}),400
     
