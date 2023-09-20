@@ -24,7 +24,7 @@ def connect_to_mongodb():
     global password
     # username = config('DB_USERNAME')
     # password = config('DB_PASSWORD')
-    conn = pymongo.MongoClient(f"mongodb+srv://kaushik:kaushiksdb@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
+    conn = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
     db = conn.users
 
 connect_to_mongodb()
