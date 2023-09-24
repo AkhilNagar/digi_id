@@ -22,8 +22,8 @@ def connect_to_mongodb():
     global db
     global username
     global password
-    # username = config('DB_USERNAME')
-    # password = config('DB_PASSWORD')
+    username = config('DB_USERNAME')
+    password = config('DB_PASSWORD')
     conn = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
     db = conn.users
 
@@ -64,16 +64,54 @@ def login():
     password=data["password"]
     user=db.users.find_one({"username":username})
     if user and bcrypt.checkpw(password.encode('utf-8'),user["password"]):
-        expiry_time=datetime.utcnow()+timedelta(hours=24)
-        payload={"username":username,"exp":expiry_time}
-        token=jwt.encode(payload,config('SECRET_KEY'),algorithm="HS256")
-        return jsonify({"message":"Login successful","token":token}),200
+        access_expiry_time=datetime.utcnow()+timedelta(minutes=15)
+        access_payload={"username":username,"exp":access_expiry_time}
+        access_token=jwt.encode(access_payload,"trial",algorithm="HS256")
+
+        refresh_expiry_time=datetime.utcnow()+timedelta(days=7)
+        refresh_payload={"username":username,"exp":refresh_expiry_time}
+        refresh_token=jwt.encode(refresh_payload,"trial",algorithm="HS256")
+
+        return jsonify({"message":"Login successful","access_token":access_token,"refresh_token":refresh_token}),200
     else:
         return jsonify({"message":"Invalid credentials"}),400
     
 
+@app.route('/refresh', methods=['POST'])
+def refresh():
+    refresh_token = request.json.get('refresh_token')
+    try:
+        # Verify the refresh token
+        payload = jwt.decode(refresh_token, 'trial', algorithms=['HS256'])
+        username = payload['username']
+        user = db.users.find_one({'username': username})
+        if not user:
+            raise jwt.InvalidTokenError('Invalid refresh token')
 
+        # Generate a new access token
+        access_expiry_time = datetime.utcnow() + timedelta(minutes=15)
+        access_payload = {'username': username, 'exp': access_expiry_time}
+        access_token = jwt.encode(access_payload, 'trial', algorithm='HS256')
 
+        return jsonify({'access_token': access_token}), 200
+    except jwt.ExpiredSignatureError:
+        return jsonify({'message': 'Refresh token has expired'}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({'message': 'Invalid refresh token'}), 401
+    
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    access_token = request.json.get('access_token')
+    try:
+        payload=jwt.decode(access_token,'trial',algorithms=['HS256'])
+        username=payload['username']
+        return jsonify({"message":"Logout successful"}),200
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message":"Token has expired"}),401
+    except jwt.InvalidTokenError:
+        return jsonify({"message":"Invalid token"}),401
+    
 @app.route('/', methods=["POST","GET"])
 def index():
     if random.random() < 0.5:  # 50% chance of failure (for testing purposes)
