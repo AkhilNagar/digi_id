@@ -98,7 +98,30 @@ def refresh():
         return jsonify({'message': 'Refresh token has expired'}), 401
     except jwt.InvalidTokenError:
         return jsonify({'message': 'Invalid refresh token'}), 401
+
+@app.route('/upload_encoding', methods=['POST'])
+def upload_encoding():
+    if 'image' not in request.files:
+        return jsonify({"message":"No image found"}),400
+    if 'username' not in request.form:
+        return jsonify({"message":"No username found"}),400
+    if not isinstance(request.form.get('username'),str):
+        return jsonify({"message":"Invalid username"}),400
     
+    username=request.form.get('username')
+    frame=request.files['image'].read()
+    image = cv2.imdecode(np.frombuffer(frame, dtype=np.uint8), cv2.IMREAD_COLOR)
+    faceEncoding=face_recognition.face_encodings(image)
+    if len(faceEncoding)==0:
+        return jsonify({"message":"No face detected"}),400
+    faceEncoding=faceEncoding[0]
+
+    encoding_array=faceEncoding.tolist()
+
+    collection=db.users
+    collection.update_one({"username":username},{"$set":{"encoding":encoding_array}})
+    return jsonify({"message":"Encoding uploaded successfully"}),200
+
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -122,12 +145,9 @@ def index():
 
 @app.route('/page/<string:eventname>', methods=['GET','POST'])
 def paging(eventname):
-    username = config('DB_USERNAME')
-    password = config('DB_PASSWORD')
-    client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
-    db = client.users
+    db = conn.users
     collection =db.userdata
-    db1=client[eventname]
+    db1=conn[eventname]
     #collname=uuid.uuid4().hex
     coll=db1[eventname]
     #response=[]
@@ -145,16 +165,15 @@ def paging(eventname):
         
 @app.route('/verify/<string:eventname>',methods=['POST'])
 def verify(eventname):
-    
-    username = config('DB_USERNAME')
-    password = config('DB_PASSWORD')
-    client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
+    # username = config('DB_USERNAME')
+    # password = config('DB_PASSWORD')
+    # client = pymongo.MongoClient(f"mongodb+srv://{username}:{password}@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=certifi.where())
     frame=request.data
     image = cv2.imdecode(np.frombuffer(frame, dtype=np.uint8), cv2.IMREAD_COLOR)
     faceEncoding=face_recognition.face_encodings(image)[0]
     #print(faceEncoding)
     
-    db=client[eventname]
+    db=conn[eventname]
     collection=db[eventname]
     encs=collection.find({},{"encoding":1})
     print("encs",encs)
