@@ -39,6 +39,7 @@ def face_extractor(img):
 
     return cropped_face
 
+
 # def api_call(face):
 #     apif = 0
 #     print('method entered')

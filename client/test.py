@@ -5,6 +5,8 @@ import glob
 import time
 import matplotlib.pyplot as plt
 
+
+
 api_url=config("verify")
 url=api_url+"/Pathaan"
 print(url)
@@ -32,5 +34,5 @@ for img in path:
 plt.plot(x,y)
 plt.xlabel('Number of images')
 plt.ylabel('Time in ms')
-plt.show()
+plt.savefig('myplot.png')
 
