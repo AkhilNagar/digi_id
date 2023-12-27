@@ -4,12 +4,17 @@ Endpoints for:
 2) Upload Biometrics
 3) View Booked Events
 '''
-from flask import Flask,request
+from flask import Flask,request,jsonify
 import user_register
 import user_login
 import create_biometrics
 
 app = Flask(__name__)
+
+@app.route('/',methods=['GET'])
+def home():
+    return "HelloWorld"
+
 @app.route('/register', methods=['POST'])
 def register():
     data=request.json
@@ -52,4 +57,4 @@ def upload_encoding():
 
 
 if __name__=="__main__":
-    app.run(port=5000)
+    app.run()

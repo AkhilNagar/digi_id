@@ -3,8 +3,15 @@ Endpoints for:
 Client Login
 Create Event
 '''
+
 from flask import Flask,request
+import client_register
+import client_login
 app = Flask(__name__)
+
+@app.route('/',methods=['GET'])
+def home():
+    return "HelloWorld"
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -36,4 +43,4 @@ def create_event():
 
 
 if __name__=="__main__":
-    app.run(port=5001)
+    app.run()

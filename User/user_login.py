@@ -5,7 +5,7 @@ import jwt
 from datetime import datetime, timedelta
 def login(username,password):
     db=db_conn.Connect("users")
-    user=db.users.find_one({"username":username})
+    user=db.find_one({"username":username})
     if user and bcrypt.checkpw(password.encode('utf-8'),user["password"]):
         access_expiry_time=datetime.utcnow()+timedelta(minutes=15)
         access_payload={"username":username,"exp":access_expiry_time}
@@ -25,7 +25,7 @@ def refresh(refresh_token):
         # Verify the refresh token
         payload = jwt.decode(refresh_token, 'trial', algorithms=['HS256'])
         username = payload['username']
-        user = db.users.find_one({'username': username})
+        user = db.find_one({'username': username})
         if not user:
             raise jwt.InvalidTokenError('Invalid refresh token')
 

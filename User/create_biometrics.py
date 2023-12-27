@@ -1,5 +1,8 @@
 from DBConn import db_conn
 import face_recognition
+import cv2
+import numpy as np
+from flask import jsonify
 
 def upload_biometrics(username,frame):
     db=db_conn.Connect("users")
@@ -10,7 +13,6 @@ def upload_biometrics(username,frame):
     faceEncoding=faceEncoding[0]
 
     encoding_array=faceEncoding.tolist()
-
-    collection=db.users
-    collection.update_one({"username":username},{"$set":{"encoding":encoding_array}})
-    return jsonify({"message":"Encoding uploaded successfully"}),200
+    
+    db.update_one({"username":username},{"$set":{"encoding":encoding_array}})
+    return jsonify({"message":"Encoding uploaded successfully of username {}".format(username)}),200
