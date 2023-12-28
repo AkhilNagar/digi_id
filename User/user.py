@@ -8,6 +8,8 @@ from flask import Flask,request,jsonify
 import user_register
 import user_login
 import create_biometrics
+import jwt
+from jwt.exceptions import DecodeError, ExpiredSignatureError
 
 app = Flask(__name__)
 
@@ -42,19 +44,37 @@ def logout():
 
 
 
-@app.route('/upload_encoding', methods=['POST'])
-def upload_encoding():
+@app.route('/kyc', methods=['POST'])
+def kyc():
+
+    access_token = request.headers.get('Authorization')
+    payload=verify_jwt(access_token)
+    if payload == None:
+        return jsonify({"message":"Auth Failed"})
+
     if 'image' not in request.files:
         return jsonify({"message":"No image found"}),400
-    if 'username' not in request.form:
-        return jsonify({"message":"No username found"}),400
+    if 'username' not in payload:
+        return jsonify({"message":"Please Login to continue!"}),400
     if not isinstance(request.form.get('username'),str):
         return jsonify({"message":"Invalid username"}),400
     
-    username=request.form.get('username')
+    user_info = request.form
     frame=request.files['image'].read()
-    return create_biometrics.upload_biometrics(username,frame)
+    return create_biometrics.upload_biometrics(user_info,frame)
 
 
 if __name__=="__main__":
     app.run()
+
+def verify_jwt(token, secret_key='trial', algorithms='HS256'):
+    if token.startswith("Bearer "):
+        token = token.split("Bearer ")[1]
+    try:
+        decoded_payload = jwt.decode(token, secret_key, algorithms=algorithms)
+        return decoded_payload
+    except ExpiredSignatureError:
+        print("JWT has expired.")
+    except DecodeError:
+        print("Failed to decode JWT.")
+    return None

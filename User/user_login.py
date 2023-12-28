@@ -8,7 +8,11 @@ def login(username,password):
     user=db.find_one({"username":username})
     if user and bcrypt.checkpw(password.encode('utf-8'),user["password"]):
         access_expiry_time=datetime.utcnow()+timedelta(minutes=15)
-        access_payload={"username":username,"exp":access_expiry_time}
+        try:
+            phone=user["phone"]
+        except:
+            phone=0
+        access_payload={"username":username,"digiid":phone,"exp":access_expiry_time}
         access_token=jwt.encode(access_payload,"trial",algorithm="HS256")
 
         refresh_expiry_time=datetime.utcnow()+timedelta(days=7)

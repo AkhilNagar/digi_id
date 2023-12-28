@@ -15,6 +15,6 @@ def registration(username,password):
         "password":hashed
     }
     db.insert_one(user_object)
-    return jsonify({"message":"User created successfully"}),201
+    return jsonify({"message":"User created successfully ","username":username}),201
 
 

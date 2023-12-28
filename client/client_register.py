@@ -13,7 +13,8 @@ def registration(username,password):
 
     user_object={
         "username":username,
-        "password":hashed
+        "password":hashed,
+        "client_code":11
     }
     db.insert_one(user_object)
     return jsonify({"message":"User created successfully"}),201

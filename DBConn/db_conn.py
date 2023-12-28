@@ -31,12 +31,12 @@ def Connect(db_name):
     mongo_conn = MongoDBConnection()
     mongo_conn.connect("mongodb+srv://akhil:akhil@host.ejnsy4a.mongodb.net/?retryWrites=true&w=majority")
     client = mongo_conn.get_client()
-    print("client",type(client.users))
-    print(db_name)
     if db_name=="users":
         return client.users.users
     if db_name=="clients":
         return client.users.clients
+    if db_name=="hotel":
+        return client.hotel
 
 if __name__ == "__main__":
     mongo_conn = MongoDBConnection()
