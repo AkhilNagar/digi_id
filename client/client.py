@@ -15,9 +15,7 @@ def home():
 @app.route('/register', methods=['POST'])
 def register():
     data=request.json
-    username=data["username"]
-    password=data["password"]
-    return client_register.registration(username,password)
+    return client_register.registration(data)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -45,7 +43,12 @@ def bookhotel():
     data= request.json
     access_token = request.headers.get('Authorization')
     payload=verify_jwt(access_token)
-    data["digiid"]=payload["digiid"]
+    if payload == None:
+        return jsonify({"message":"Auth Failed"}),400
+    if payload["digiid"] != 0:
+        data["digiid"]=payload["digiid"]
+    else:
+        return jsonify({"message":"Please complete KYC to book"}),400
     if (book_hotel.book_hotel(data)):
         return jsonify({"message":"Booking Successful"}),200
     else:
@@ -59,10 +62,12 @@ def verify_user():
     payload=verify_jwt(access_token)
     if payload == None:
         return jsonify({"message":"Auth Failed"})
-        
-    output_data=verify.verify_user(payload["username"],frame)
+    if payload["client_code"]!=0:
+        output_data=verify.verify_user(payload,frame)
+    else:
+        return jsonify({"message":"Login with Client Credentials"})
     if output_data:
-        return jsonify(output_data)
+        return jsonify(output_data),200
     else:
         return jsonify({"message":"Failed to Verify"})
 
@@ -70,6 +75,8 @@ if __name__=="__main__":
     app.run()
 
 def verify_jwt(token, secret_key='trial', algorithms='HS256'):
+    if token is None:
+        return None 
     if token.startswith("Bearer "):
         token = token.split("Bearer ")[1]
     try:

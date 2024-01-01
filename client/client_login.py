@@ -13,7 +13,7 @@ def login(username,password):
 
     if user and bcrypt.checkpw(password.encode('utf-8'),user["password"]):
         access_expiry_time=datetime.utcnow()+timedelta(minutes=15)
-        access_payload={"username":username,"exp":access_expiry_time}
+        access_payload={"client_code":user["client_code"],"event_code":user["event_code"],"exp":access_expiry_time}
         access_token=jwt.encode(access_payload,"trial",algorithm="HS256")
 
         refresh_expiry_time=datetime.utcnow()+timedelta(days=7)

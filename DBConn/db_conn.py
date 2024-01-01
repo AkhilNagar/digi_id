@@ -33,10 +33,10 @@ def Connect(db_name):
     client = mongo_conn.get_client()
     if db_name=="users":
         return client.users.users
-    if db_name=="clients":
+    elif db_name=="clients":
         return client.users.clients
-    if db_name=="hotel":
-        return client.hotel
+    else:
+        return client[db_name]
 
 if __name__ == "__main__":
     mongo_conn = MongoDBConnection()
