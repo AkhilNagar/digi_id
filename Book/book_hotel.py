@@ -8,7 +8,7 @@ from datetime import datetime,timedelta
 def book_hotel(data):
     dbu=db_conn.Connect("users")
     dbh=db_conn.Connect(str(data["clientcode"]))
-    #t_date = datetime.today().date().strftime(""%d-%m-%Y"")
+    #t_date = datetime.today().date().strftime("%d-%m-%Y")
     user=dbu.find_one({"phone":data["digiid"]})
     try:
         booking={

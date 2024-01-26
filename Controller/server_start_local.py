@@ -5,7 +5,7 @@ import os
 apps = [
     ("User", "user.py", "5000"),
     ("Client", "client.py", "5001"),
-    
+    ("Verify", "verify.py", "5002"),
 ]
 
 # Start Flask servers in separate processes

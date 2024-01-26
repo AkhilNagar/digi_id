@@ -4,6 +4,8 @@ Endpoints for:
 2) Upload Biometrics
 3) View Booked Events
 '''
+import sys
+sys.path.append('..')
 from flask import Flask,request,jsonify
 import user_register
 import user_login

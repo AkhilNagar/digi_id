@@ -1,7 +1,18 @@
+import sys
+sys.path.append('..')
+import os
+print("HELOOOO")
 from flask import Flask,request,jsonify
+main_project_folder = os.path.dirname(os.path.abspath(__file__))
+    # Get a list of all directories in the main project folder
+all_dirs = [d for d in os.listdir(main_project_folder) if os.path.isdir(os.path.join(main_project_folder, d))]
+
+# Print the list of folders
+print("Folders in the main project folder:")
+for folder in all_dirs:
+    print(folder)   
 import client_register
 import client_login
-import verify
 from Book import book_hotel
 import jwt
 from jwt.exceptions import DecodeError, ExpiredSignatureError
@@ -53,24 +64,7 @@ def bookhotel():
         return jsonify({"message":"Booking Successful"}),200
     else:
         return jsonify({"message":"Booking Failed"}),400
-
-@app.route('/verify', methods=['POST'])
-def verify_user():
-    frame=request.files['image'].read()
-
-    access_token = request.headers.get('Authorization')
-    payload=verify_jwt(access_token)
-    if payload == None:
-        return jsonify({"message":"Auth Failed"})
-    if payload["client_code"]!=0:
-        output_data=verify.verify_user(payload,frame)
-    else:
-        return jsonify({"message":"Login with Client Credentials"})
-    if output_data:
-        return jsonify(output_data),200
-    else:
-        return jsonify({"message":"Failed to Verify"})
-
+    
 if __name__=="__main__":
     app.run()
 

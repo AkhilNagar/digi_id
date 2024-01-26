@@ -1,5 +1,3 @@
-import sys
-sys.path.append('..')
 from DBConn import db_conn
 import bcrypt
 from flask import jsonify
