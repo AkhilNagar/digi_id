@@ -22,7 +22,7 @@ for folder in all_dirs:
     print(folder)
 
 
-from DBConn import db_conn
+import db_conn
 from flask import Flask,request,jsonify
 import face_recognition
 from datetime import datetime,timedelta
@@ -30,6 +30,10 @@ import cv2
 import numpy as np
 import jwt
 app = Flask(__name__)
+
+@app.route('/',methods=['GET'])
+def home():
+    return "Up and Running!"
 
 @app.route('/',methods=['POST'])
 def verify_user():

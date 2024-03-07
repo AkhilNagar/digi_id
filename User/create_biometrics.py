@@ -1,4 +1,4 @@
-from DBConn import db_conn
+import db_conn
 import face_recognition
 import cv2
 import numpy as np

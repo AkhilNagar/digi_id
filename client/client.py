@@ -1,27 +1,16 @@
-import sys
-sys.path.append('..')
-import os
-print("HELOOOO")
-from flask import Flask,request,jsonify
-main_project_folder = os.path.dirname(os.path.abspath(__file__))
-    # Get a list of all directories in the main project folder
-all_dirs = [d for d in os.listdir(main_project_folder) if os.path.isdir(os.path.join(main_project_folder, d))]
 
-# Print the list of folders
-print("Folders in the main project folder:")
-for folder in all_dirs:
-    print(folder)   
+from flask import Flask,request,jsonify
 import client_register
 import client_login
-from Book import book_hotel
+import book_hotel
 import jwt
-from jwt.exceptions import DecodeError, ExpiredSignatureError
+import socket
 
 app = Flask(__name__)
 
 @app.route('/',methods=['GET'])
 def home():
-    return "HelloWorld"
+    return f"Hello Client {socket.gethostname()}"
 
 @app.route('/register', methods=['POST'])
 def register():

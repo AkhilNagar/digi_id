@@ -4,20 +4,18 @@ Endpoints for:
 2) Upload Biometrics
 3) View Booked Events
 '''
-import sys
-sys.path.append('..')
 from flask import Flask,request,jsonify
 import user_register
 import user_login
 import create_biometrics
 import jwt
-from jwt.exceptions import DecodeError, ExpiredSignatureError
+import socket
 
 app = Flask(__name__)
 
 @app.route('/',methods=['GET'])
 def home():
-    return "HelloWorld"
+    return f"Hello User {socket.gethostname()}"
 
 @app.route('/register', methods=['POST'])
 def register():

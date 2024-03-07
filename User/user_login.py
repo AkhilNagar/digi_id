@@ -1,4 +1,4 @@
-from DBConn import db_conn
+import db_conn
 import bcrypt
 from flask import jsonify
 import jwt

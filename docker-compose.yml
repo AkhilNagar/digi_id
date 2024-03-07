@@ -3,33 +3,26 @@ version: "3.7"
 services:
   client:
     build: ./Client
-    #restart: always
-    volumes:
-      - ./Client:/Client
-    ports:
-      - "5000"
-  user:
-    build: ./User
-    #restart: always
-    volumes:
-      - ./User:/User
     ports:
       - "5001"
+
+  user:
+    build: ./User
+    ports:
+      - "5000"
+
   verify:
     build: ./Verify
-    #restart: always
-    volumes:
-      - ./Verify:/Verify
     ports:
       - "5002"
+
   nginx:
     build: ./nginx
-    #image: digiid.azurecr.io/nginxi
-    # volumes:
-    #   - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - client
       - user
       - verify
     ports:
       - "80:80"
+      - "81:81"
+      - "82:82"

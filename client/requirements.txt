@@ -13,3 +13,5 @@ dlib
 face-recognition
 gunicorn
 DateTime
+PyJWT
+bcrypt
