@@ -13,9 +13,11 @@ services:
 
   verify:
     build: ./Verify
+    environment:
+      - REDIS_HOST=redis
     ports:
       - "5002"
-
+  
   nginx:
     build: ./nginx
     depends_on:
@@ -26,3 +28,8 @@ services:
       - "80:80"
       - "81:81"
       - "82:82"
+  
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"

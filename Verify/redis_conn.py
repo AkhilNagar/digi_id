@@ -2,13 +2,14 @@ import redis
 import verify
 import numpy as np
 import json
+import os
 class RedisConnection:
     _instance = None
-
+    
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            pool = redis.ConnectionPool(host='localhost', port=6379, db=0, decode_responses=True)
+            pool = redis.ConnectionPool(host='redis', port=6379, db=0, decode_responses=True)
             cls._instance.r = redis.Redis(connection_pool=pool)
         return cls._instance
 
