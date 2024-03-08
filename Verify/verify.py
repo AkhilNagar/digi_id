@@ -1,34 +1,12 @@
-import os
-print("FIRSTTTTT")
-main_project_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    # Get a list of all directories in the main project folder
-all_dirs = [d for d in os.listdir(main_project_folder) if os.path.isdir(os.path.join(main_project_folder, d))]
-
-# Print the list of folders
-print("Folders in the main project folder:")
-for folder in all_dirs:
-    print(folder)
-
-import sys
-sys.path.append('..')
-print("SECOND")
-main_project_folder = os.path.dirname(os.path.abspath(__file__))
-    # Get a list of all directories in the main project folder
-all_dirs = [d for d in os.listdir(main_project_folder) if os.path.isdir(os.path.join(main_project_folder, d))]
-
-# Print the list of folders
-print("Folders in the main project folder:")
-for folder in all_dirs:
-    print(folder)
-
-
 import db_conn
+import redis_conn
 from flask import Flask,request,jsonify
 import face_recognition
 from datetime import datetime,timedelta
 import cv2
 import numpy as np
 import jwt
+import json
 app = Flask(__name__)
 
 @app.route('/',methods=['GET'])
@@ -66,30 +44,65 @@ def verify_user(payload,frame):
 
     date=datetime.today()
     yest= date - timedelta(days=1)
-    if "{}-{}".format(payload["event_code"],date.strftime("%d-%m-%Y")) not in dbc.list_collection_names():
+
+    event_name="{}-{}".format(payload["event_code"],date.strftime("%d-%m-%Y"))
+    yest_event_name="{}-{}".format(payload["event_code"],yest.strftime("%d-%m-%Y"))
+
+    if event_name not in dbc.list_collection_names():
         result = dbe.find({
             "Check-in": {"$lte": date},
             "Check-out": {"$gte": date}
         })
         if result:
-            dbc["{}-{}".format(payload["event_code"],date.strftime("%d-%m-%Y"))].insert_many(result)
+            dbc[event_name].insert_many(result)
         
-        if "{}-{}".format(payload["event_code"],yest.strftime("%d-%m-%Y")) in dbc.list_collection_names():
-            dbc["{}-{}".format(payload["event_code"],yest.strftime("%d-%m-%Y"))].drop()
+        if yest_event_name in dbc.list_collection_names():
+            dbc[yest_event_name].drop()
 
                 
+    # Add a caching mechanism right here
+    # get_event()
+    # if returns list of encodings -> Cache hit
+    #                              -> use the list to compare encodings
+    # else -> Cache Miss
+    #      -> Delete yesterday event header
+    #      -> create_event
+    #      -> populate event(user["encoding"])
+    #      -> use the list to compare encodings
+    count=dbc[event_name].count_documents({})
+    all_encodings=redis_conn.get_event(event_name,count)
+    if all_encodings is not None:
+        print("Cache Hit")
+        for key,value in all_encodings.items():
+            value=json.loads(value)
+            result = face_recognition.compare_faces([np.array(value["encoding"])], faceEncoding)
+            if result[0]:
+                    return {"message":"Welcome {}.".format(key),
+                            "checkin":value["checkin"],
+                            "checkout":value["checkout"],}
+        return {"message":"No Booking"} 
+    else:
+        print("Cache Miss")
+        users= list(dbc[event_name].find())
+        try:
+            redis_conn.delete_event(yest_event_name)
+            redis_conn.populate_event(event_name,users)
+        except:
+            print("Could not delete/populate event")
+        finally:
+            for user in users:
+                result = face_recognition.compare_faces([user["encoding"]], faceEncoding)
+                if result[0]:
+                    return {"message":"Welcome {}.".format(user["fullname"]),
+                            "checkin":user["Check-in"],
+                            "checkout":user["Check-out"],}
+            return {"message":"No Booking"}
+        
+            
 
-    users= dbc["{}-{}".format(payload["event_code"],date.strftime("%d-%m-%Y"))].find()
 
 
-    for user in users:
-        result = face_recognition.compare_faces([user["encoding"]], faceEncoding)
-        if result[0]:
-            return {"message":"Welcome {}.".format(user["fullname"]),
-                    "checkin":user["Check-in"],
-                    "checkout":user["Check-out"],}
-    return {"message":"No Booking"}
-
+    
 
 
 def verify_jwt(token, secret_key='trial', algorithms='HS256'):
@@ -102,10 +115,10 @@ def verify_jwt(token, secret_key='trial', algorithms='HS256'):
         return decoded_payload
     except ExpiredSignatureError:
         print("JWT has expired.")
-        return None
+        return "JWT has expired."
     except DecodeError:
         print("Failed to decode JWT.")
-        return None
+        return "Failed to decode JWT."
     return None
 
 if __name__=="__main__":
