@@ -98,13 +98,6 @@ def verify_user(payload,frame):
                             "checkout":user["Check-out"],}
             return {"message":"No Booking"}
         
-            
-
-
-
-    
-
-
 def verify_jwt(token, secret_key='trial', algorithms='HS256'):
     if token is None:
         return None 

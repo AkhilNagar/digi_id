@@ -3,20 +3,19 @@ import verify
 import numpy as np
 import json
 import os
+
 class RedisConnection:
     _instance = None
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            pool = redis.ConnectionPool(host='redis', port=6379, db=0, decode_responses=True)
+            pool = redis.ConnectionPool(host='localhost', port=6379, db=0, decode_responses=True)
             cls._instance.r = redis.Redis(connection_pool=pool)
         return cls._instance
 
 def redis_conn():
     return RedisConnection().r
-
-
 
 def delete_event(event_name):
     conn = redis_conn()
@@ -37,16 +36,17 @@ def populate_event(event_name,attendees):
         conn.hset(event_name, user["fullname"], serialized_enc)
     return None
 
-
 def get_event(event_name,count):
-
-    conn = redis_conn()
-    if conn.exists(event_name) and count==conn.hlen(event_name):
-        print("Cache Hit")
-        event_data = conn.hgetall(event_name)
-        return event_data
-    else:
+    try:
+        conn = redis_conn()
+        if conn.exists(event_name) and count==conn.hlen(event_name):
+            event_data = conn.hgetall(event_name)
+            return event_data
+        else:
+            return None
+    except:
         return None
+    
 
 #  event1{
 #   "name":{checkin checkout encoding},
