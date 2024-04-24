@@ -3,6 +3,7 @@ import requests
 
 # Constants
 API_URL = 'http://localhost:5000/'
+BOOK='http://localhost:5001/'
 
 # Function to make API requests with JWT token in headers
 def make_api_request(url, headers=None):
@@ -84,12 +85,38 @@ def kyc_upload():
                 st.write(response.json())
             else:
                 st.error("KYC submission failed. Please try again.")
+def book_hotel():
+    if "access_token" not in st.session_state:
+        st.warning("Please login to access KYC.")
+        return
+    st.write("Please enter details:")
+    checkin = st.text_input("Check-In")
+    checkout = st.text_input("Check-Out")
+    clientcode=9617
+    eventcode=4499
+    if st.button("Book Hotel"):
+        if not (checkin and checkout):
+            st.error("All fields and image are required for KYC.")
+        else:
+            data = {
+                "clientcode": clientcode,
+                "eventcode": eventcode,
+                "checkindate": checkin,
+                "checkoutdate": checkout
+            }
+            headers = {"Authorization": f"Bearer {st.session_state.access_token}","Content-Type": "application/json"}
+            response = requests.post(f"{BOOK}/bookhotel", json=data, headers=headers)
+            if response.status_code == 200:
+                st.success("Hotel Booked successfully!")
+                st.write(response.json())
+            else:
+                st.error("Hotel Booking failed. Please try again.")
 
 # Main Streamlit App
 def main():
     st.title("User Authentication and KYC Upload")
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Register", "Login", "KYC Upload"])
+    page = st.sidebar.radio("Go to", ["Register", "Login", "KYC Upload", "Book Hotel"])
 
     if page == "Register":
         register_user()
@@ -97,6 +124,7 @@ def main():
         login_user()
     elif page == "KYC Upload":
         kyc_upload()
-
+    elif page == "Book Hotel":
+        book_hotel()
 if __name__ == "__main__":
     main()

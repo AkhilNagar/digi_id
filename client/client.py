@@ -39,19 +39,26 @@ def create_event():
 
 @app.route('/bookhotel', methods=['POST'])
 def bookhotel():
-    data= request.json
-    access_token = request.headers.get('Authorization')
-    payload=verify_jwt(access_token)
-    if payload == None:
-        return jsonify({"message":"Auth Failed"}),400
-    if payload["digiid"] != 0:
-        data["digiid"]=payload["digiid"]
-    else:
-        return jsonify({"message":"Please complete KYC to book"}),400
-    if (book_hotel.book_hotel(data)):
-        return jsonify({"message":"Booking Successful"}),200
-    else:
-        return jsonify({"message":"Booking Failed"}),400
+    try:
+        data= request.json
+        access_token = request.headers.get('Authorization')
+        payload=verify_jwt(access_token)
+        if payload == None:
+            print("Auth Failed")
+            return jsonify({"message":"Auth Failed"}),400
+        if payload["digiid"] != 0:
+            data["digiid"]=payload["digiid"]
+        else:
+            print("Perform KYC")
+            return jsonify({"message":"Please complete KYC to book"}),400
+        if (book_hotel.book_hotel(data)):
+            print("Booking Completed")
+            return jsonify({"message":"Booking Successful"}),200
+        else:
+            print("Booking Failed")
+            return jsonify({"message":"Booking Failed"}),400
+    except Exception as e:
+        print(e) 
     
 if __name__=="__main__":
     app.run()

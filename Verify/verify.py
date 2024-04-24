@@ -48,16 +48,23 @@ def verify_user(payload,frame):
     event_name="{}-{}".format(payload["event_code"],date.strftime("%d-%m-%Y"))
     yest_event_name="{}-{}".format(payload["event_code"],yest.strftime("%d-%m-%Y"))
 
-    if event_name not in dbc.list_collection_names():
-        result = dbe.find({
+    result = dbe.find({
             "Check-in": {"$lte": date},
             "Check-out": {"$gte": date}
         })
+    count=dbc[event_name].count_documents({})
+    if event_name not in dbc.list_collection_names():
         if result:
             dbc[event_name].insert_many(result)
         
         if yest_event_name in dbc.list_collection_names():
             dbc[yest_event_name].drop()
+    else:
+        
+        if count != dbe.count_documents({"Check-in": {"$lte": date}, "Check-out": {"$gte": date}}):
+            dbc[event_name].drop()
+            dbc[event_name].insert_many(result)
+
 
                 
     # Add a caching mechanism right here
@@ -69,7 +76,7 @@ def verify_user(payload,frame):
     #      -> create_event
     #      -> populate event(user["encoding"])
     #      -> use the list to compare encodings
-    count=dbc[event_name].count_documents({})
+    
     all_encodings=redis_conn.get_event(event_name,count)
     if all_encodings is not None:
         print("Cache Hit")
