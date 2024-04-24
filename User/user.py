@@ -42,16 +42,12 @@ def logout():
     access_token = request.json.get('access_token')
     return user_login.logout(access_token)
 
-
-
 @app.route('/kyc', methods=['POST'])
 def kyc():
-
     access_token = request.headers.get('Authorization')
     payload=verify_jwt(access_token)
     if payload == None:
         return jsonify({"message":"Auth Failed"})
-
     if 'image' not in request.files:
         return jsonify({"message":"No image found"}),400
     if 'username' not in payload:

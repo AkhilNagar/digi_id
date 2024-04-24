@@ -3,6 +3,7 @@ import bcrypt
 from flask import jsonify
 import jwt
 from datetime import datetime, timedelta
+
 def login(username,password):
     db=db_conn.Connect("users")
     user=db.find_one({"username":username})
@@ -19,7 +20,16 @@ def login(username,password):
         refresh_payload={"username":username,"exp":refresh_expiry_time}
         refresh_token=jwt.encode(refresh_payload,"trial",algorithm="HS256")
 
-        return jsonify({"message":"Login successful","access_token":access_token,"refresh_token":refresh_token}),200
+        response_data = {
+        "message": "Login successful",
+        "access_token": access_token,
+        "refresh_token": refresh_token
+        }
+    
+        response = jsonify(response_data)
+        response.headers['access_token'] = access_token  # Add custom header
+        return response, 200
+
     else:
         return jsonify({"message":"Invalid credentials"}),400
 
