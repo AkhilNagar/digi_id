@@ -65,9 +65,7 @@ def verify_picture():
     # else:
     #     st.error("KYC submission failed. Please try again.")
 
-verified = False
-
-def detect_faces(frame):
+def detect_faces(frame, message):
     # Load the pre-trained Haar cascade for face detection
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -80,6 +78,7 @@ def detect_faces(frame):
     # Draw rectangles around the detected faces
     for (x, y, w, h) in faces:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(frame, message, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
     return frame
 
@@ -96,10 +95,10 @@ def verify_face(image):
         # st.success("verified")
         # st.write(response.json())
         verified = True
-        return response.json()
+        return response.json(), verified
     else:
         verified = False
-        return {"message": "Face verification failed"}
+        return {"message": "Face verification failed"}, verified
 
 def verify_webcam():
     if "access_token" not in st.session_state:
@@ -122,21 +121,26 @@ def verify_webcam():
             st.info("Please turn off the other app that is using the camera and restart app")
             st.stop()
 
-        # Process the frame to detect faces
-        frame_with_faces = detect_faces(frame)
+        result, verified = verify_face(frame)
 
-        # Display the processed frame
-        FRAME_WINDOW.image(frame_with_faces)
-
-        result = verify_face(frame)
-
-        if not verified:
-            st.error(result["message"])
-        else:
-            face_coordinates = result.get("face_coordinates")
+        if verified:
             st.success("Face verified")
             st.write(result)
+            message = result["message"]
+        else:            
+            st.error(result["message"])
+            message = result["message"]
 
+        # Process the frame to detect faces
+        frame_with_faces = detect_faces(frame, message)
+
+        # Convert BGR to RGB for displaying in Streamlit
+        frame_with_faces_rgb = cv2.cvtColor(frame_with_faces, cv2.COLOR_BGR2RGB)
+
+        # Display the processed frame
+        FRAME_WINDOW.image(frame_with_faces_rgb)
+
+        
         # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         # FRAME_WINDOW.image(frame)
 
@@ -175,7 +179,6 @@ def main():
             st.session_state.login_done = True
             st.success("Login successful!")
             st.write("You are logged in.")
-
     if "login_done" in st.session_state:
         menu = ["Picture", "Webcam"]
         choice = st.sidebar.selectbox("Input type", menu)
