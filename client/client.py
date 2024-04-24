@@ -41,6 +41,7 @@ def create_event():
 def bookhotel():
     try:
         data= request.json
+        print(data)
         access_token = request.headers.get('Authorization')
         payload=verify_jwt(access_token)
         if payload == None:
